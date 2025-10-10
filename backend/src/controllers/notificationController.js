@@ -2,6 +2,7 @@
 // This file contains all the business logic for handling notifications
 
 import Notification from '../models/Notification.js';
+import { emitNotification } from '../socket/notificationHandler.js';
 
 /**
  * POST /api/notifications
@@ -26,6 +27,11 @@ export const createNotification = async (req, res) => {
       userId: userId || null, // If no userId provided, it's a broadcast
       type: type || 'info', // Default to 'info' if not specified
     });
+
+    // Emit real-time notification via Socket.IO
+    const io = req.app.get('io');
+    const connectedUsers = req.app.get('connectedUsers');
+    emitNotification(io, connectedUsers, notification);
 
     // Send success response with the created notification
     res.status(201).json({
