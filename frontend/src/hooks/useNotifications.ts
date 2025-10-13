@@ -39,8 +39,21 @@ export const useNotifications = (userId: string) => {
   // Initialize
   useEffect(() => {
     // Connect socket
-    initializeSocket();
-    registerUser(userId);
+    const socket = initializeSocket();
+    
+    // Wait for socket connection before registering user
+    const handleConnect = () => {
+      console.log('Socket connected, registering user:', userId);
+      registerUser(userId);
+    };
+
+    // Listen for connection event
+    socket.on('connect', handleConnect);
+    
+    // If already connected, register immediately
+    if (socket.connected) {
+      registerUser(userId);
+    }
 
     // Listen for new notifications
     onNotification((notification) => {
@@ -62,6 +75,11 @@ export const useNotifications = (userId: string) => {
 
     // Load notifications
     loadNotifications();
+
+    // Cleanup
+    return () => {
+      socket.off('connect', handleConnect);
+    };
   }, [userId]);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;

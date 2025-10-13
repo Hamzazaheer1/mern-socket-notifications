@@ -46,6 +46,8 @@ export const registerUser = (userId: string): void => {
   if (socket && socket.connected) {
     socket.emit('register', userId);
     console.log(`User registered: ${userId}`);
+  } else {
+    console.warn(`Cannot register user ${userId}: socket not connected`);
   }
 };
 
