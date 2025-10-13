@@ -3,7 +3,7 @@ import { io, Socket } from 'socket.io-client';
 import type { Notification } from '../types/notification';
 
 // Socket.IO server URL
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:8000';
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Socket instance (singleton)
 let socket: Socket | null = null;
