@@ -44,7 +44,16 @@ export const useNotifications = (userId: string) => {
 
     // Listen for new notifications
     onNotification((notification) => {
-      setNotifications((prev) => [notification, ...prev]);
+      setNotifications((prev) => {
+        // Check if notification already exists (prevent duplicates)
+        const exists = prev.some((n) => n._id === notification._id);
+        if (exists) {
+          console.log('Notification already exists, skipping:', notification._id);
+          return prev;
+        }
+        return [notification, ...prev];
+      });
+      
       toast(notification.message, {
         icon: '🔔',
         duration: 4000,
