@@ -1,0 +1,68 @@
+// Simple hook for notifications
+import { useState, useEffect } from 'react';
+import type { Notification } from '../types/notification';
+import { fetchNotifications, markNotificationAsRead } from '../services/api';
+import { initializeSocket, registerUser, onNotification } from '../services/socket';
+import toast from 'react-hot-toast';
+
+export const useNotifications = (userId: string) => {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load notifications
+  const loadNotifications = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetchNotifications(userId);
+      setNotifications(response.data);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load notifications');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Mark as read
+  const markAsRead = async (id: string) => {
+    try {
+      await markNotificationAsRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
+      );
+    } catch (err) {
+      toast.error('Failed to mark as read');
+    }
+  };
+
+  // Initialize
+  useEffect(() => {
+    // Connect socket
+    initializeSocket();
+    registerUser(userId);
+
+    // Listen for new notifications
+    onNotification((notification) => {
+      setNotifications((prev) => [notification, ...prev]);
+      toast(notification.message, {
+        icon: '🔔',
+        duration: 4000,
+      });
+    });
+
+    // Load notifications
+    loadNotifications();
+  }, [userId]);
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  return {
+    notifications,
+    unreadCount,
+    isLoading,
+    error,
+    markAsRead,
+    refresh: loadNotifications,
+  };
+};
